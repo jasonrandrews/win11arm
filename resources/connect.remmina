@@ -1,0 +1,19 @@
+[remmina]
+name=VM Connect
+protocol=RDP
+scale=2
+quality=9
+disable_fastpath=0
+glyph-cache=0
+multitransport=0
+relax-order-checks=1
+ignore-tls-errors=1
+cert_ignore=1
+window_width=1024
+window_height=768
+window_maximize=0
+disableautoreconnect=1
+viewmode=1
+network=lan #change viewmode=1 to viewmode=3 for fullscreen
+sound=local #to get microphone input working, change to sound=remote, and USB passthrough your microphone to the VM.
+colordepth=63
