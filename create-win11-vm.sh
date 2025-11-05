@@ -11,7 +11,7 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 # Default values
 DEFAULT_USERNAME="win11arm"
 DEFAULT_PASSWORD="win11arm"
-DEFAULT_DISKSIZE=40
+DEFAULT_DISKSIZE=60
 DEFAULT_RDP_PORT=3389
 DEFAULT_LANGUAGE="English (United States)"
 
@@ -517,23 +517,27 @@ cmd_firstboot() {
     # Export PAN_MESA_DEBUG for better graphics performance
     export PAN_MESA_DEBUG=gl3
     
-    # Calculate VM memory if not specified - use half of available RAM
+    # Calculate VM memory and CPU allocation
     if [ -z "$VM_MEM" ]; then
         total_ram_gb=$(awk '/MemTotal/ {print int($2/1048576)}' /proc/meminfo)
-        VM_MEM=$((total_ram_gb / 2))
-        # Ensure minimum of 2GB
-        if [ "$VM_MEM" -lt 2 ]; then
-            VM_MEM=2
+        total_cores="$(grep -c ^processor /proc/cpuinfo)"
+        if [ "$total_cores" -gt 16 ]; then
+            VM_MEM=16
+            num_cores=8
+        else
+            VM_MEM=$((total_ram_gb / 2))
+            [ "$VM_MEM" -lt 4 ] && VM_MEM=2
+            num_cores=$((total_cores / 2))
+            [ "$num_cores" -lt 2 ] && num_cores=2
         fi
-        # Note: Removed 8GB cap to allow full half-system memory allocation
-    fi
-    
-    # Get number of CPU cores - use half of available cores
-    total_cores="$(grep -c ^processor /proc/cpuinfo)"
-    num_cores=$((total_cores / 2))
-    # Ensure minimum of 2 cores
-    if [ "$num_cores" -lt 2 ]; then
-        num_cores=2
+    else
+        total_cores="$(grep -c ^processor /proc/cpuinfo)"
+        if [ "$total_cores" -gt 16 ]; then
+            num_cores=8
+        else
+            num_cores=$((total_cores / 2))
+            [ "$num_cores" -lt 2 ] && num_cores=2
+        fi
     fi
     
     # Prepare QEMU flags

@@ -81,16 +81,20 @@ start_vm() {
     
     status "Starting Windows VM in headless mode..."
     
-    # Calculate memory (use half of available RAM, min 2GB)
+    # Calculate memory and CPU allocation
     local total_ram_gb=$(awk '/MemTotal/ {print int($2/1048576)}' /proc/meminfo)
-    local vm_mem=$((total_ram_gb / 2))
-    [ "$vm_mem" -lt 2 ] && vm_mem=2
-    
-    # Calculate CPU cores (use half of available cores, min 4)
     local total_cores=$(grep -c ^processor /proc/cpuinfo)
-    local num_cores=$((total_cores / 2))
-    [ "$num_cores" -lt 4 ] && num_cores=4
-    
+    local vm_mem
+    local num_cores
+    if [ "$total_cores" -gt 16 ]; then
+        vm_mem=16
+        num_cores=8
+    else
+        vm_mem=$((total_ram_gb / 2))
+        [ "$vm_mem" -lt 4 ] && vm_mem=4
+        num_cores=$((total_cores / 2))
+        [ "$num_cores" -lt 2 ] && num_cores=2
+    fi
     status "Using ${vm_mem}GB RAM and $num_cores CPU cores"
     
     # QEMU command
